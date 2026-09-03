@@ -1,0 +1,10 @@
+const express = require('express');
+const simp = require('../index');
+const app = express();
+const PORT = 43789;
+app.use(simp());
+app.get('/', (req, res) => { res.json({ ok: true, message: 'Hello from express-simp!' }); });
+app.get('/api/users', (req, res) => { res.json({ users: [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }] }); });
+app.get('/text', (req, res) => { res.type('text/plain').send('plain text'); });
+app.get('/no-content', (req, res) => { res.status(204).send(); });
+app.listen(PORT, () => { console.log('listening', PORT); });
