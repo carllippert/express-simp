@@ -1,39 +1,33 @@
 # Publishing Setup for express-simp
 
-This package uses **npm Trusted Publishing** via GitHub Actions OIDC for secure, token-free publishing.
+This package uses automated GitHub Actions publishing with a **granular npm access token**.
 
-## First-Time Setup (Carl)
+## Setup (Carl)
 
-### 1. Initial Manual Publish
-
-Since the package `express-simp` doesn't exist on npm yet, you must publish version 0.0.1 manually **once**:
-
-```bash
-npm login
-npm publish --access public
-```
-
-This creates the package on npm under your account.
-
-### 2. Configure npm Trusted Publisher
-
-After the first manual publish, configure GitHub Actions as a trusted publisher:
+### 1. Create a Granular Access Token on npm
 
 1. Go to [npmjs.com](https://www.npmjs.com) and log in
-2. Navigate to the `express-simp` package settings
-3. Go to **Publishing access** → **Trusted Publishers**
-4. Click **Add a new trusted publisher**
-5. Select **GitHub Actions**
-6. Fill in:
-   - **Repository owner**: `carllippert`
-   - **Repository name**: `express-simp`
-   - **Workflow file**: `publish.yml`
-   - **Environment** (optional): leave blank
-7. Save
+2. Navigate to **Access Tokens** (under your profile)
+3. Click **Generate New Token** → **Granular Access Token**
+4. Configure the token:
+   - **Token name**: `express-simp-github-actions` (or similar)
+   - **Expiration**: 1 year (or your preference)
+   - **Packages and scopes**: Select `express-simp` package
+   - **Permissions**: Read and write
+5. Copy the token (starts with `npm_...`)
+
+### 2. Add Token to GitHub Secrets
+
+1. Go to the GitHub repo settings
+2. Navigate to **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `NPM_TOKEN`
+5. Value: paste the granular token from step 1
+6. Save
 
 ### 3. Publishing New Versions
 
-After Trusted Publisher is configured, all future releases are automated:
+Once the token is configured, all future releases are automated:
 
 1. Update version in `package.json` (e.g., `0.0.2`)
 2. Commit and push to main
@@ -45,32 +39,31 @@ After Trusted Publisher is configured, all future releases are automated:
 4. GitHub Actions will automatically:
    - Run tests
    - Publish to npm with provenance
-   - No secrets or tokens needed!
+   - Token expires after 1 year (renew as needed)
 
-## How It Works
+## Optional: npm Trusted Publisher (OIDC)
 
-- The `publish.yml` workflow uses OIDC (`id-token: write` permission)
-- npm verifies the GitHub Actions identity via OpenID Connect
-- `npm publish --provenance` creates a cryptographically signed attestation linking the npm package to the GitHub source
-- No long-lived tokens = better security
+For token-free publishing, you can optionally configure npm Trusted Publishing:
 
-## Verification
+1. After the first manual publish, go to [npmjs.com](https://www.npmjs.com)
+2. Navigate to the `express-simp` package settings
+3. Go to **Publishing access** → **Trusted Publishers**
+4. Add GitHub Actions as a trusted publisher:
+   - **Repository owner**: `carllippert`
+   - **Repository name**: `express-simp`
+   - **Workflow file**: `publish.yml`
+5. Remove the `NPM_TOKEN` secret from GitHub
+6. Update `.github/workflows/publish.yml` to use OIDC instead
 
-After publishing, you can verify provenance on npm:
-
-```bash
-npm view express-simp
-```
-
-Look for the `publishConfig.provenance` field showing the GitHub Actions attestation.
+**Benefits**: No token rotation needed, cryptographically signed attestations
 
 ## Troubleshooting
 
 **Error: "Unable to authenticate"**
-- Verify Trusted Publisher is configured on npm for exact repo/workflow names
-- Check that workflow has `id-token: write` permission
-- Ensure package was published manually at least once
+- Verify `NPM_TOKEN` secret exists in GitHub Actions secrets
+- Check that the token has write permissions for `express-simp`
+- Ensure token hasn't expired
 
-**First publish fails in CI**
-- Expected! First publish must be manual to create the package
-- CI publishing only works for updates to existing packages
+**Error: "You must be logged in to publish"**
+- The workflow needs `NPM_TOKEN` configured as a repository secret
+- Make sure the publish step includes: `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}`
