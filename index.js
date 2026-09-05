@@ -1,3 +1,8 @@
+/**
+ * express-simp: Encouragement middleware for metered APIs
+ * Usage: app.use(simp()) or app.use(simp({ header: 'X-Motivation' }))
+ */
+
 const fs = require('fs');
 const path = require('path');
 
