@@ -1,6 +1,6 @@
 {
   "name": "express-simp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Express middleware that encourages metered API callers to make one more request",
   "main": "index.js",
   "type": "commonjs",
